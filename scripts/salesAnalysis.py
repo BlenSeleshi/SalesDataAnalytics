@@ -110,6 +110,20 @@ def promo_effect_on_sales(df):
     plt.tight_layout()
     plt.show()
 
+# Effect of Promotion by Month
+def promotion_effect_by_month(df):
+    df['Month'] = df['Date'].dt.month
+    
+    # Plot sales with promotion vs without promotion by month
+    plt.figure(figsize=(12, 6))
+    sns.lineplot(x='Month', y='Sales', hue='Promo', data=df, marker='o', ci=None)
+    plt.title("Effect of Promotions on Sales Throughout the Months")
+    plt.xticks(range(1, 13))
+    plt.xlabel("Month")
+    plt.ylabel("Sales")
+    plt.show()
+
+
 # Store promo effectiveness analysis
 def store_promo_effectiveness(df):
     
@@ -137,6 +151,33 @@ def plot_store_type_performance(df):
     plt.legend(title='Store Type')
     plt.show()
     
+
+    
+# Effect of Promotion by Store Type
+def promotion_effect_by_store_type(df):
+    # Plot sales by store type and promo
+    plt.figure(figsize=(12, 6))
+    sns.boxplot(x='StoreType', y='Sales', hue='Promo', data=df)
+    plt.title("Effect of Promotions Based on Store Type")
+    plt.xlabel("Store Type")
+    plt.ylabel("Sales")
+    plt.show()
+    
+# Effect of Promotion by Store Type throughou the Months    
+def promotion_effect_by_store_type_month(df):
+    df['Month'] = df['Date'].dt.month
+    
+    # Plot sales by store type, promo, and month
+    plt.figure(figsize=(12, 6))
+    sns.lineplot(x='Month', y='Sales', hue='Promo', style='StoreType', data=df, marker='o', ci=None)
+    plt.title("Effect of Promotions Based on Store Types Throughout the Months")
+    plt.xticks(range(1, 13))
+    plt.xlabel("Month")
+    plt.ylabel("Sales")
+    plt.show()
+
+
+    
 # Customer behavior during store opening/closing times
 def store_opening_closing_behavior(df):
     logging.info("Plotting the behaviour of customers on opening times...")
@@ -145,20 +186,6 @@ def store_opening_closing_behavior(df):
     plt.figure(figsize=(8, 6))
     sns.barplot(data=open_sales, x='Open', y='Sales', palette='coolwarm')
     plt.title("Sales During Store Open and Close Times")
-    plt.show()
-
-# Weekday sales analysis
-def weekday_sales(df):
-    
-    logging.info("Analyzing weekly sales ...")
-    df['DayOfWeek'] = pd.to_datetime(df['Date']).dt.dayofweek
-    weekday_sales = df.groupby('DayOfWeek')['Sales'].mean().reset_index()
-
-    plt.figure(figsize=(10, 6))
-    sns.barplot(data=weekday_sales, x='DayOfWeek', y='Sales', palette='magma')
-    plt.title("Average Sales by Day of the Week")
-    plt.xlabel("Day of Week (0 = Monday, 6 = Sunday)")
-    plt.ylabel("Average Sales")
     plt.show()
 
 # Assortment type impact on sales
@@ -185,11 +212,11 @@ def competitor_distance_sales(df):
 def competitor_opening_impact(df):
     
     logging.info("Plotting the Impact of Competitor Opening on Sales...")
-    df['CompetitionOpenSinceYear'] = pd.to_datetime(df['CompetitionOpenSinceYear'], errors='coerce')
     comp_sales = df.groupby('CompetitionOpenSinceYear')['Sales'].mean().reset_index()
-
     plt.figure(figsize=(10, 6))
-    sns.lineplot(data=comp_sales, x='CompetitionOpenSinceYear', y='Sales')
+    sns.lineplot(x='CompetitionOpenSinceYear', y='Sales', data=df, ci=None)
     plt.title("Impact of Competitor Opening on Sales Over Time")
     plt.xticks(rotation=45)
+    plt.xlabel("Year Competitor Opened")
+    plt.ylabel("Average Sales")
     plt.show()
