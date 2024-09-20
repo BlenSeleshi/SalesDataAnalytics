@@ -62,7 +62,6 @@ def seasonal_sales_behavior(df):
     
 def plot_day_of_week_sales(df):
     logging.info("Plotting average sales by day of week...")
-    df['DayOfWeek'] = df.index.dayofweek
     day_of_week_sales = df.groupby('DayOfWeek')['Sales'].mean()
 
     plt.figure(figsize=(10, 6))
