@@ -8,7 +8,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 
 def load_data(train_path, test_path, store_path):
-    logging.info("Loading datastes from file...")
+    logging.info("Loaded datastes from file...")
     train = pd.read_csv(train_path)
     test = pd.read_csv(test_path)
     store = pd.read_csv(store_path)
@@ -63,6 +63,15 @@ def handle_missing_values_zero(df, columns):
     logging.info("Replacing missing values with 0....")
     for col in columns:
         df[col].fillna(0, inplace=True)
+    return df
+
+# Function to fill missing values for categorical columns with 'Unknown'
+def handle_missing_categorical(df, columns, fill_value='Unknown'):
+    logging.info("Replacing Missing Values with 'Unknown'....")
+    for column in columns:
+        if column in df.columns:
+            df[column].fillna(fill_value, inplace=True)
+            print(f"Missing values in categorical column '{column}' filled with '{fill_value}'")
     return df
 
 # Feature engineering for dates
