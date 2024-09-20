@@ -6,12 +6,14 @@ import logging
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def load_data(file_path):
-    logging.info("Loading data from file...")
-    df = pd.read_csv(file_path, parse_dates=['Date'])
-    #df.set_index('Date', inplace=True)
-    logging.info(f"Data loaded with shape {df.shape}")
-    return df
+
+def load_data(train_path, test_path, store_path):
+    logging.info("Loaded datastes from file...")
+    train = pd.read_csv(train_path)
+    test = pd.read_csv(test_path)
+    store = pd.read_csv(store_path)
+    return train, test, store
+    
 
 # Function to display missing values and their percentage in the DataFrame
 def missing_values_table(df):
@@ -61,6 +63,15 @@ def handle_missing_values_zero(df, columns):
     logging.info("Replacing missing values with 0....")
     for col in columns:
         df[col].fillna(0, inplace=True)
+    return df
+
+# Function to fill missing values for categorical columns with 'Unknown'
+def handle_missing_categorical(df, columns, fill_value='Unknown'):
+    logging.info("Replacing Missing Values with 'Unknown'....")
+    for column in columns:
+        if column in df.columns:
+            df[column].fillna(fill_value, inplace=True)
+            print(f"Missing values in categorical column '{column}' filled with '{fill_value}'")
     return df
 
 # Feature engineering for dates
