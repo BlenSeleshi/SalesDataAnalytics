@@ -210,9 +210,12 @@ def competitor_distance_sales(df):
 
 # Competitor opening impact on sales
 def competitor_opening_impact(df):
-    
     logging.info("Plotting the Impact of Competitor Opening on Sales...")
-    comp_sales = df.groupby('CompetitionOpenSinceYear')['Sales'].mean().reset_index()
+
+    # Ensure that 'CompetitionOpenSinceYear' is a proper numeric type for analysis
+    df['CompetitionOpenSinceYear'] = pd.to_numeric(df['CompetitionOpenSinceYear'], errors='coerce')
+
+    # Plotting the actual sales values grouped by 'CompetitionOpenSinceYear'
     plt.figure(figsize=(10, 6))
     sns.lineplot(x='CompetitionOpenSinceYear', y='Sales', data=df, ci=None)
     plt.title("Impact of Competitor Opening on Sales Over Time")
