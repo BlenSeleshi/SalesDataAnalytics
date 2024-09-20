@@ -124,6 +124,19 @@ def store_promo_effectiveness(df):
     plt.title("Store Promo Effectiveness (Promo % vs Sales)")
     plt.show()
 
+# Store Type Performance
+def plot_store_type_performance(df):
+    
+    logging.info("Plotting store type performance over time...")
+    df['Month'] = pd.to_datetime(df['Date']).dt.month
+    store_type_sales = df.groupby(['Month', 'StoreType'])['Sales'].mean().unstack()
+    store_type_sales.plot(figsize=(15, 7))
+    plt.title('Monthly Average Sales by Store Type')
+    plt.xlabel('Date')
+    plt.ylabel('Average Sales')
+    plt.legend(title='Store Type')
+    plt.show()
+    
 # Customer behavior during store opening/closing times
 def store_opening_closing_behavior(df):
     logging.info("Plotting the behaviour of customers on opening times...")
