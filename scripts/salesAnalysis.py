@@ -20,12 +20,23 @@ def promo_distribution(df):
     plt.show()
 
 # Analyze sales behavior around holidays
-def holiday_sales_behavior(df, holiday_col='StateHoliday'):
-    holiday_sales = df.groupby([holiday_col, 'Date'])['Sales'].sum().reset_index()
+def analyze_holiday_effects(df):
     plt.figure(figsize=(12, 6))
-    sns.lineplot(data=holiday_sales, x='Date', y='Sales', hue=holiday_col)
-    plt.title("Sales Behavior Before, During, and After Holidays")
-    plt.xticks(rotation=45)
+    sns.boxplot(x='StateHoliday', y='Sales', data=df)
+    plt.title('Sales Behavior During Holidays')
+    plt.xlabel('State Holiday')
+    plt.ylabel('Sales')
+    plt.show()
+
+    # Exploring the trends before, during, and after holidays
+    df['DayBeforeHoliday'] = (df['StateHoliday'] != '0') & (df['Date'].dt.dayofweek == 0)
+    df['DayAfterHoliday'] = (df['StateHoliday'] != '0') & (df['Date'].dt.dayofweek == 2)
+    
+    plt.figure(figsize=(12, 6))
+    sns.lineplot(x='Date', y='Sales', hue='DayBeforeHoliday', data=df[df['StateHoliday'] != '0'])
+    plt.title('Sales Before and After Holidays')
+    plt.xlabel('Date')
+    plt.ylabel('Sales')
     plt.show()
 
 # Analyze seasonal behavior (Christmas, Easter, etc.)
