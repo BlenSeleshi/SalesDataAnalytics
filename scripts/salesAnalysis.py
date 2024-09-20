@@ -59,6 +59,28 @@ def seasonal_sales_behavior(df):
     plt.xlabel('Month')
     plt.ylabel('Average Sales')
     plt.show()
+    
+def plot_day_of_week_sales(df):
+    logging.info("Plotting average sales by day of week...")
+    df['DayOfWeek'] = df.index.dayofweek
+    day_of_week_sales = df.groupby('DayOfWeek')['Sales'].mean()
+
+    plt.figure(figsize=(10, 6))
+    day_of_week_sales.plot(kind='bar')
+    plt.title('Average Sales by Day of Week')
+    plt.xlabel('Day of Week (1=Monday, 7=Sunday)')
+    plt.ylabel('Average Sales')
+    plt.show()
+    
+# Statistics of sales on holidays and day of the week
+def print_statistics(df):
+    logging.info("Printing summary statistics...")
+    print(df.groupby('DayOfWeek')['Sales'].describe())
+    print("\nHoliday vs Non-Holiday Sales:")
+    print(df.groupby('StateHoliday')['Sales'].describe())
+    print("\n School Holiday vs Non-Holiday Sales:")
+    print(df.groupby('SchoolHoliday')['Sales'].describe())
+    
 
 # Correlation between sales and number of customers
 def sales_customers_correlation(df):
