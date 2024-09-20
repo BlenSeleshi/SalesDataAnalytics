@@ -3,13 +3,20 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import pearsonr
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Load the merged dataset
+
 def load_data(file_path):
+    logging.info("Loading the Dataset datastes from file...")
     return pd.read_csv(file_path)
 
 # Checking distribution of promotions in training and test sets
 def promo_distribution(df):
+    logging.info("Calculating and plotting the distribution of promotion....")
     print("Promotion Distribution in Training Set:")
     promo_train_dist = df['Promo'].value_counts(normalize=True) * 100
     print(promo_train_dist)
@@ -21,13 +28,14 @@ def promo_distribution(df):
 
 # Analyze sales behavior around holidays
 def analyze_holiday_effects(df):
+    logging.info("Plotting the Sales behaviour round the holidays...")
     plt.figure(figsize=(12, 6))
     sns.boxplot(x='StateHoliday', y='Sales', data=df)
     plt.title('Sales Behavior During Holidays')
     plt.xlabel('State Holiday')
     plt.ylabel('Sales')
     plt.show()
-
+    
     # Exploring the trends before, during, and after holidays
     df['DayBeforeHoliday'] = (df['StateHoliday'] != '0') & (df['Date'].dt.dayofweek == 0)
     df['DayAfterHoliday'] = (df['StateHoliday'] != '0') & (df['Date'].dt.dayofweek == 2)
@@ -41,6 +49,7 @@ def analyze_holiday_effects(df):
 
 # Analyze seasonal behavior (Christmas, Easter, etc.)
 def seasonal_sales_behavior(df):
+    logging.info("Plotting the Seasonal Sales Behaviour...")
     df['Month'] = pd.to_datetime(df['Date']).dt.month
     seasonal_sales = df.groupby('Month')['Sales'].mean().reset_index()
 
@@ -53,6 +62,7 @@ def seasonal_sales_behavior(df):
 
 # Correlation between sales and number of customers
 def sales_customers_correlation(df):
+    logging.info("Analyzing the correlation between sales and customers....")
     corr, _ = pearsonr(df['Sales'], df['Customers'])
     print(f"Correlation between Sales and Customers: {corr:.2f}")
 
@@ -63,6 +73,7 @@ def sales_customers_correlation(df):
 
 # Promo effect on sales and customers
 def promo_effect_on_sales(df):
+    logging.info("Plotting the effect of promotion on sales....")
     promo_sales = df.groupby('Promo')['Sales'].mean().reset_index()
     promo_customers = df.groupby('Promo')['Customers'].mean().reset_index()
 
@@ -70,7 +81,8 @@ def promo_effect_on_sales(df):
 
     sns.barplot(data=promo_sales, x='Promo', y='Sales', ax=ax[0], palette='viridis')
     ax[0].set_title("Effect of Promo on Sales")
-
+    
+    logging.info("Plotting the effect of promotion on customers...")
     sns.barplot(data=promo_customers, x='Promo', y='Customers', ax=ax[1], palette='viridis')
     ax[1].set_title("Effect of Promo on Customers")
 
@@ -79,6 +91,8 @@ def promo_effect_on_sales(df):
 
 # Store promo effectiveness analysis
 def store_promo_effectiveness(df):
+    
+    logging.info("Plotting the effectiveness of promotion on based on store types...")
     promo_stores = df.groupby('Store')['Promo'].mean().reset_index()
     promo_sales = df.groupby('Store')['Sales'].mean().reset_index()
 
@@ -91,6 +105,7 @@ def store_promo_effectiveness(df):
 
 # Customer behavior during store opening/closing times
 def store_opening_closing_behavior(df):
+    logging.info("Plotting the behaviour of customers on opening times...")
     open_sales = df.groupby('Open')['Sales'].mean().reset_index()
 
     plt.figure(figsize=(8, 6))
@@ -100,6 +115,8 @@ def store_opening_closing_behavior(df):
 
 # Weekday sales analysis
 def weekday_sales(df):
+    
+    logging.info("Analyzing weekly sales ...")
     df['DayOfWeek'] = pd.to_datetime(df['Date']).dt.dayofweek
     weekday_sales = df.groupby('DayOfWeek')['Sales'].mean().reset_index()
 
@@ -112,6 +129,8 @@ def weekday_sales(df):
 
 # Assortment type impact on sales
 def assortment_sales(df):
+    
+    logging.info("Plotting the Impact of Assortment on Sales...")
     assortment_sales = df.groupby('Assortment')['Sales'].mean().reset_index()
 
     plt.figure(figsize=(8, 6))
@@ -121,6 +140,8 @@ def assortment_sales(df):
 
 # Competitor distance impact on sales
 def competitor_distance_sales(df):
+    
+    logging.info("Plotting the Impact of Competitor Distance on Sales...")
     plt.figure(figsize=(8, 6))
     sns.scatterplot(data=df, x='CompetitionDistance', y='Sales', alpha=0.5)
     plt.title("Competition Distance vs Sales")
@@ -128,6 +149,8 @@ def competitor_distance_sales(df):
 
 # Competitor opening impact on sales
 def competitor_opening_impact(df):
+    
+    logging.info("Plotting the Impact of Competitor Opening on Sales...")
     df['CompetitionOpenSinceYear'] = pd.to_datetime(df['CompetitionOpenSinceYear'], errors='coerce')
     comp_sales = df.groupby('CompetitionOpenSinceYear')['Sales'].mean().reset_index()
 
