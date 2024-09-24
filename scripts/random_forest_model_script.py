@@ -1,38 +1,25 @@
 import logging
-import pandas as pd
-import pickle
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
+import numpy as np
 
-def build_random_forest_model(X_train, y_train, preprocessor, param_grid):
+def predict_future_sales(rf_model, X_test, num_weeks=6):
     """
-    Builds a Random Forest Regressor using GridSearchCV and a pipeline.
+    Predict 6 weeks (42 days) into the future using the trained Random Forest model.
     """
-    logging.info("Building Random Forest Model.")
+    logging.info(f"Predicting sales for the next {num_weeks} weeks.")
     
-    # Define pipeline
-    pipeline = Pipeline([
-        ('preprocessing', preprocessor),
-        ('model', RandomForestRegressor(random_state=42))
-    ])
-    
-    # Hyperparameter tuning
-    search = GridSearchCV(pipeline, param_grid, cv=3, n_jobs=-1, scoring='neg_mean_squared_error')
-    search.fit(X_train, y_train)
-    
-    logging.info(f"Best parameters: {search.best_params_}")
-    logging.info(f"Best score: {search.best_score_}")
-    
-    return search.best_estimator_, search.best_params_, search.best_score_
-
-def serialize_model(model):
-    """
-    Serializes the model with a timestamp.
-    """
-    filename = f"model_{pd.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.pkl"
-    with open(filename, 'wb') as file:
-        pickle.dump(model, file)
-    
-    logging.info(f"Model serialized as {filename}")
-    return filename
+    predictions = []
+    for i in range(num_weeks * 7):
+        # Get the prediction for one day ahead
+        next_pred = rf_model.predict(X_test)
+        
+        # Append predictions for analysis
+        predictions.append(next_pred)
+        
+        # Slide the window forward by adding the latest prediction back to X_test (simulate roll-forward)
+        X_test['Sales_lag_7'] = np.roll(X_test['Sales_lag_7'], -1)
+        X_test['Sales_lag_7'][-1] = next_pred  # Use prediction for the next day
+        
+    return np.array(predictions).flatten()
