@@ -1,25 +1,29 @@
 import logging
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import Pipeline
-from sklearn.model_selection import GridSearchCV
-import numpy as np
 
-def predict_future_sales(rf_model, X_test, num_weeks=6):
+def build_random_forest_model(X, y, preprocessor, param_grid):
     """
-    Predict 6 weeks (42 days) into the future using the trained Random Forest model.
+    Builds and trains a Random Forest model.
     """
-    logging.info(f"Predicting sales for the next {num_weeks} weeks.")
+    logging.info("Building Random Forest Model.")
     
-    predictions = []
-    for i in range(num_weeks * 7):
-        # Get the prediction for one day ahead
-        next_pred = rf_model.predict(X_test)
-        
-        # Append predictions for analysis
-        predictions.append(next_pred)
-        
-        # Slide the window forward by adding the latest prediction back to X_test (simulate roll-forward)
-        X_test['Sales_lag_7'] = np.roll(X_test['Sales_lag_7'], -1)
-        X_test['Sales_lag_7'][-1] = next_pred  # Use prediction for the next day
-        
-    return np.array(predictions).flatten()
+    model = Pipeline(steps=[('preprocessor', preprocessor),
+                             ('model', RandomForestRegressor(random_state=42))])
+
+    grid_search = GridSearchCV(model, param_grid, cv=3, scoring='neg_mean_squared_error', n_jobs=-1)
+    grid_search.fit(X, y)
+    
+    logging.info(f"Best parameters found: {grid_search.best_params_}")
+    logging.info(f"Best score (MSE): {-grid_search.best_score_}")
+    
+    return grid_search.best_estimator_, grid_search.best_params_, -grid_search.best_score_
+
+def predict_future_sales(model, future_data):
+    """
+    Predict future sales using the trained model.
+    """
+    logging.info("Predicting future sales.")
+    predictions = model.predict(future_data)
+    return predictions
