@@ -1,35 +1,25 @@
 import logging
-from sklearn.metrics import mean_squared_error, mean_absolute_error
 import numpy as np
+from sklearn.metrics import mean_squared_error
 
-def evaluate_model_performance(actual_sales, predicted_sales, model_name="Model"):
+def evaluate_model_performance(y_true, y_pred, model_name):
     """
-    Evaluates the performance of a model by calculating RMSE and MAE.
+    Evaluates the model performance using RMSE and prints the results.
     """
-    logging.info(f"Evaluating performance for {model_name}.")
-    
-    # Calculate RMSE and MAE
-    rmse = np.sqrt(mean_squared_error(actual_sales, predicted_sales))
-    mae = mean_absolute_error(actual_sales, predicted_sales)
-    
-    logging.info(f"{model_name} - RMSE: {rmse}, MAE: {mae}")
-    
-    return {'model': model_name, 'RMSE': rmse, 'MAE': mae}
+    logging.info(f"Evaluating {model_name} performance.")
+    mse = mean_squared_error(y_true, y_pred)
+    rmse = np.sqrt(mse)
+    logging.info(f"{model_name} RMSE: {rmse}")
+    return rmse
 
-def compare_models(models_performance):
+def compare_models(model1_performance, model2_performance, model1_name, model2_name):
     """
-    Compare multiple models based on their RMSE and MAE.
+    Compares the performance of two models.
     """
-    logging.info("Comparing models' performance.")
-    
-    for performance in models_performance:
-        model_name = performance['model']
-        rmse = performance['RMSE']
-        mae = performance['MAE']
-        
-        print(f"{model_name} - RMSE: {rmse:.4f}, MAE: {mae:.4f}")
-    
-    best_model = min(models_performance, key=lambda x: x['RMSE'])
-    logging.info(f"Best model is: {best_model['model']} with RMSE: {best_model['RMSE']}")
-    
-    return best_model
+    logging.info("Comparing model performance.")
+    if model1_performance < model2_performance:
+        logging.info(f"{model1_name} performs better with RMSE of {model1_performance}")
+        return model1_name
+    else:
+        logging.info(f"{model2_name} performs better with RMSE of {model2_performance}")
+        return model2_name
