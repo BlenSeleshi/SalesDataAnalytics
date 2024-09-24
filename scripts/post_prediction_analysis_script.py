@@ -39,4 +39,15 @@ def visualize_predictions(predicted_sales, actual_sales, title='Sales Prediction
     """
     logging.info("Visualizing predicted vs actual sales.")
     
-    plt.figure
+    plt.figure(figsize=(14, 7))
+    
+    plt.plot(actual_sales, color='blue', label='Actual Sales')
+    plt.plot(predicted_sales, color='red', linestyle='--', label='Predicted Sales')
+    
+    plt.title(title)
+    plt.xlabel('Days')
+    plt.ylabel('Sales')
+    plt.legend()
+    plt.show()
+
+    logging.info("Sales predictions visualization completed.")
