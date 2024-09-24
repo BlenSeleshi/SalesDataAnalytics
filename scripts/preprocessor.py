@@ -138,6 +138,15 @@ def extract_date_features(df):
     # y = df['Sales']
     return df
    
+def difference_series(df, lag=1):
+    """
+    Apply differencing to ensure stationarity for time series modeling.
+    """
+    logging.info("Applying differencing to time series.")
+    df['Sales_diff'] = df.groupby('Store')['Sales'].diff(lag)
+    df.dropna(inplace=True)
+    return df   
+
 # function to encode and scale data
 def create_pipeline(numerical_columns, categorical_columns):
     logging.info("Starting encoding and scaling")
