@@ -162,6 +162,21 @@ def create_pipeline(numerical_columns, categorical_columns):
     logging.info("Encoding and scaling completed")
     return preprocessor
 
+def train_test_split_custom(df, test_size=0.2):
+    """
+    Perform train-test split ensuring temporal order is preserved.
+    """
+    logging.info("Performing train-test split.")
+    train_df = df.iloc[:-int(test_size*len(df))]
+    test_df = df.iloc[-int(test_size*len(df)):]
+    
+    X_train = train_df.drop('Sales', axis=1)
+    y_train = train_df['Sales']
+    X_test = test_df.drop('Sales', axis=1)
+    y_test = test_df['Sales']
+    
+    return X_train, X_test, y_train, y_test
+
 # Merge train/test datasets with store.csv
 def merge_datasets(df, store_df, on_column):
     logging.info("Merging the two datasets....")
