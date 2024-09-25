@@ -93,74 +93,100 @@ def extract_date_features(df):
     df['Day'] = df['Date'].dt.day
     df['DayOfWeek'] = df['Date'].dt.dayofweek
     df['IsWeekend'] = (df['DayOfWeek'] >= 5).astype(int)
-
+    
+        # Create holiday features
+    df['IsStateHoliday'] = df['StateHoliday'].map({"0": 0, "a": 1, "b": 1, "c": 1})
     # Extract day types
     df['MonthPhase'] = pd.cut(df['Day'], bins=[0, 10, 20, 31], labels=['Beginning', 'Mid', 'End'])
+    
+    # calulate the number of days the store was opened
+        # Ensure 'Open' column is numeric
+    df['Open'] = pd.to_numeric(df['Open'])
+    
+    # Calculate total open days for each store
+    total_open_days = df[df['Open'] == 1].groupby('Store')['Date'].nunique().reset_index()
+    total_open_days.columns = ['Store', 'TotalOpenDays']
+    
+    # Merge TotalOpenDays back into the original dataframe
+    df = df.merge(total_open_days, on='Store', how='left')
+    
+    df['StateHoliday'] = df['StateHoliday'].astype('category')
+    df['Assortment'] = df['Assortment'].astype('category')
+    df['StoreType'] = df['StoreType'].astype('category')
+    df['PromoInterval']= df['PromoInterval'].astype('category')
+    
+    
+    df['StateHoliday_cat'] = df['StateHoliday'].cat.codes
+    df['Assortment_cat'] = df['Assortment'].cat.codes
+    df['StoreType_cat'] = df['StoreType'].cat.codes
+    df['PromoInterval_cat'] = df['PromoInterval'].cat.codes
+    
+    df['StateHoliday_cat'] = df['StateHoliday_cat'].astype('float')
+    df['Assortment_cat'] = df['Assortment_cat'].astype('float')
+    df['StoreType_cat'] = df['StoreType_cat'].astype('float')
+    df['PromoInterval_cat'] = df['PromoInterval_cat'].astype('float')
+    
+    df = pd.get_dummies(df, columns=["Assortment", "StoreType","PromoInterval"], prefix=["is_Assortment", "is_StoreType","is_PromoInteval"])
+    
+    
+    # Calculate CompetitionOpenSince
+    df['CompetitionOpenSince'] = pd.to_datetime(np.where(
+    (df['CompetitionOpenSinceMonth']==0) & (df['CompetitionOpenSinceYear']==0),
+    df['Date'],  # Set to current date if competition hasn't opened yet
+    df.apply(lambda row: pd.DateOffset(year=row['Year'], month=row['Month']) - timedelta(days=row['CompetitionOpenSinceMonth']), axis=1)
+))
 
-    # Competition-related features
-    df['CompetitionOpenSince'] = pd.to_datetime(dict(year=df.CompetitionOpenSinceYear, 
-                                                     month=df.CompetitionOpenSinceMonth, day=15), errors='coerce')
+# Calculate CompetitionDaysOpen
     df['CompetitionDaysOpen'] = (df['Date'] - df['CompetitionOpenSince']).dt.days
-    df['CompetitionDaysOpen'] = df['CompetitionDaysOpen'].apply(lambda x: x if x > 0 else 0)
 
-    # Promotion-related features
-    df['Promo2Since'] = pd.to_datetime(dict(year=df.Promo2SinceYear, 
-                                            week=df.Promo2SinceWeek, 
-                                            day=1), errors='coerce')
-    # Ensure that Promo2Since is not NaT before calculating days active
-    df['Promo2DaysActive'] = (df['Date'] - df['Promo2Since']).dt.days
-    df['Promo2DaysActive'] = df['Promo2DaysActive'].apply(lambda x: x if x > 0 else 0)
+# Ensure CompetitionDaysOpen is positive
+    df['CompetitionDaysOpen'] = df['CompetitionDaysOpen'].apply(lambda x: max(x, 0))
 
-    # Feature: Days to/after holiday
-    holiday_dates = df[df['StateHoliday'] != '0']['Date'].unique()
-    df['DaysToNextHoliday'] = df['Date'].apply(lambda x: (holiday_dates - x).min().days)
-    df['DaysAfterHoliday'] = df['Date'].apply(lambda x: (x - holiday_dates).min().days)
 
-    # Storage age days
-    df['Store_age_days'] = (df['Date'] - pd.to_datetime(df['Store_open_date'])).dt.days
-
-    # Generate lagged features
-    df = df.sort_values(['Store', 'Date'])
-    df['Sales_lag_7'] = df.groupby('Store')['Sales'].shift(7)
-    df['Sales_lag_14'] = df.groupby('Store')['Sales'].shift(14)
-    df['Sales_lag_30'] = df.groupby('Store')['Sales'].shift(30)
-
-    # Rolling window features
-    df['Sales_roll_mean_7'] = df.groupby('Store')['Sales'].shift(1).rolling(window=7).mean()
-    df['Sales_roll_std_7'] = df.groupby('Store')['Sales'].shift(1).rolling(window=7).std()
+    del df['CompetitionOpenSinceYear']
+    del df['CompetitionOpenSinceMonth']
+    del df['StateHoliday']
 
     logging.info("Feature extraction completed")
-    return df 
+    return df
 
-# function to encode and scale data
-def create_pipeline(numerical_columns, categorical_columns):
-    logging.info("Starting encoding and scaling")
-    
-    # Column transformer to scale numerical data and one-hot encode categorical data
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ('num', StandardScaler(), numerical_columns),
-            ('cat', OneHotEncoder(handle_unknown='ignore'), categorical_columns)
-        ]
-    )
-    
-    logging.info("Encoding and scaling completed")
-    return preprocessor
+def difference_series(df, lag=1):
+    """
+    Apply differencing to ensure stationarity for time series modeling.
+    """
+    logging.info("Applying differencing to time series.")
+    df['Sales_diff'] = df.groupby('Store')['Sales'].diff(lag)
+    df.dropna(inplace=True)
+    return df   
 
-def train_test_split_custom(df, test_size=0.2):
+import pandas as pd
+from statsmodels.tsa.stattools import adfuller
+
+def create_supervised_data(series, window):
     """
-    Perform train-test split ensuring temporal order is preserved.
+    Create sliding window supervised data for LSTM.
     """
-    logging.info("Performing train-test split.")
-    train_df = df.iloc[:-int(test_size*len(df))]
-    test_df = df.iloc[-int(test_size*len(df)):]
-    
-    X_train = train_df.drop('Sales', axis=1)
-    y_train = train_df['Sales']
-    X_test = test_df.drop('Sales', axis=1)
-    y_test = test_df['Sales']
-    
-    return X_train, X_test, y_train, y_test
+    X, y = [], []
+    for i in range(len(series) - window):
+        X.append(series[i:(i + window)])
+        y.append(series[i + window])
+    return np.array(X), np.array(y)
+
+def difference_data(df, column, diff_order=1):
+    """
+    Perform differencing to make the time series stationary.
+    """
+    df[f'{column}_diff'] = df[column].diff(diff_order)
+    return df
+
+def check_stationarity(series):
+    """
+    Perform the Augmented Dickey-Fuller test to check for stationarity.
+    """
+    result = adfuller(series.dropna())
+    print('ADF Statistic: %f' % result[0])
+    print('p-value: %f' % result[1])
+    return result[1] < 0.05  # Returns True if the data is stationary
 
 # Merge train/test datasets with store.csv
 def merge_datasets(df, store_df, on_column):

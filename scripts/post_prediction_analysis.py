@@ -1,13 +1,13 @@
-import logging
 import numpy as np
 import matplotlib.pyplot as plt
+import logging
 
 def plot_feature_importance(model, feature_names):
     """
     Plot feature importance for a given model.
     """
     logging.info("Plotting feature importance.")
-    importance = model.named_steps['model'].feature_importances_
+    importance = model.feature_importances_
     indices = np.argsort(importance)[::-1]
     
     plt.figure(figsize=(12, 6))
@@ -40,7 +40,6 @@ def visualize_predictions(predicted_sales, actual_sales, title='Sales Prediction
     logging.info("Visualizing predicted vs actual sales.")
     
     plt.figure(figsize=(14, 7))
-    
     plt.plot(actual_sales, color='blue', label='Actual Sales')
     plt.plot(predicted_sales, color='red', linestyle='--', label='Predicted Sales')
     
