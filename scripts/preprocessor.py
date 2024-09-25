@@ -1,7 +1,10 @@
 import pandas as pd
 import numpy as np
 import pandas as pd
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
 import logging
+from datetime import timedelta
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -75,23 +78,108 @@ def handle_missing_categorical(df, columns, fill_value='Unknown'):
     return df
 
 # Feature engineering for dates
-def extract_date_features(df, date_column):
+def extract_date_features(df):
     """
     Extracts useful date features from the given date column.
-    :param df: DataFrame to process
-    :param date_column: Name of the date column to extract features from
-    :return: DataFrame with new date-related features
     """
     logging.info("Extracting Date Features from the dataset....")
-    df[date_column] = pd.to_datetime(df[date_column])
+
+    # Handle missing values
+    # Remove rows where stores are closed or have 0 sales but are open
+    df = df[(df['Open'] == 1) & (df['Sales'] > 0)]
+
+    # Feature extraction from Date column
+    df['Year'] = df['Date'].dt.year
+    df['Month'] = df['Date'].dt.month
+    df['Day'] = df['Date'].dt.day
+    df['DayOfWeek'] = df['Date'].dt.dayofweek
+    df['IsWeekend'] = (df['DayOfWeek'] >= 5).astype(int)
     
-    # Extract Year, Month, Day, and Week of the Year
-    df['Year'] = df[date_column].dt.year
-    df['Month'] = df[date_column].dt.month
-    df['Day'] = df[date_column].dt.day
-    df['WeekOfYear'] = df[date_column].dt.isocalendar().week
+        # Create holiday features
+    df['IsStateHoliday'] = df['StateHoliday'].map({"0": 0, "a": 1, "b": 1, "c": 1})
+    # Extract day types
+    df['MonthPhase'] = pd.cut(df['Day'], bins=[0, 10, 20, 31], labels=['Beginning', 'Mid', 'End'])
     
+    # calulate the number of days the store was opened
+        # Ensure 'Open' column is numeric
+    df['Open'] = pd.to_numeric(df['Open'])
+    
+    # Calculate total open days for each store
+    total_open_days = df[df['Open'] == 1].groupby('Store')['Date'].nunique().reset_index()
+    total_open_days.columns = ['Store', 'TotalOpenDays']
+    
+    # Merge TotalOpenDays back into the original dataframe
+    df = df.merge(total_open_days, on='Store', how='left')
+    
+    df['StateHoliday'] = df['StateHoliday'].astype('category')
+    df['Assortment'] = df['Assortment'].astype('category')
+    df['StoreType'] = df['StoreType'].astype('category')
+    df['PromoInterval']= df['PromoInterval'].astype('category')
+    df['MonthPhase'] = df['MonthPhase'].astype('category')
+    
+    df['StateHoliday_cat'] = df['StateHoliday'].cat.codes
+    df['Assortment_cat'] = df['Assortment'].cat.codes
+    df['StoreType_cat'] = df['StoreType'].cat.codes
+    df['PromoInterval_cat'] = df['PromoInterval'].cat.codes
+    df['MonthPhase_cat'] = df['MonthPhase'].cat.codes
+    
+    df['StateHoliday_cat'] = df['StateHoliday_cat'].astype('float')
+    df['Assortment_cat'] = df['Assortment_cat'].astype('float')
+    df['StoreType_cat'] = df['StoreType_cat'].astype('float')
+    df['PromoInterval_cat'] = df['PromoInterval_cat'].astype('float')
+    df['MonthPhase_cat'] = df['MonthPhase_cat'].astype('float')
+    
+    df = pd.get_dummies(df, columns=["Assortment", "StoreType","PromoInterval","MonthPhase"], prefix=["is_Assortment", "is_StoreType","is_PromoInteval","MonthPhase"])
+    
+
+    del df['StateHoliday']
+    del df['StateHoliday_cat'] 
+    del df['Assortment_cat']
+    del df['StoreType_cat'] 
+    del df['PromoInterval_cat'] 
+    del df['MonthPhase_cat'] 
+    
+
+    logging.info("Feature extraction completed")
     return df
+
+def difference_series(df, lag=1):
+    """
+    Apply differencing to ensure stationarity for time series modeling.
+    """
+    logging.info("Applying differencing to time series.")
+    df['Sales_diff'] = df.groupby('Store')['Sales'].diff(lag)
+    df.dropna(inplace=True)
+    return df   
+
+import pandas as pd
+from statsmodels.tsa.stattools import adfuller
+
+def create_supervised_data(series, window):
+    """
+    Create sliding window supervised data for LSTM.
+    """
+    X, y = [], []
+    for i in range(len(series) - window):
+        X.append(series[i:(i + window)])
+        y.append(series[i + window])
+    return np.array(X), np.array(y)
+
+def difference_data(df, column, diff_order=1):
+    """
+    Perform differencing to make the time series stationary.
+    """
+    df[f'{column}_diff'] = df[column].diff(diff_order)
+    return df
+
+def check_stationarity(series):
+    """
+    Perform the Augmented Dickey-Fuller test to check for stationarity.
+    """
+    result = adfuller(series.dropna())
+    print('ADF Statistic: %f' % result[0])
+    print('p-value: %f' % result[1])
+    return result[1] < 0.05  # Returns True if the data is stationary
 
 # Merge train/test datasets with store.csv
 def merge_datasets(df, store_df, on_column):
