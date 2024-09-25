@@ -4,6 +4,7 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 import logging
+from datetime import timedelta
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -114,38 +115,30 @@ def extract_date_features(df):
     df['Assortment'] = df['Assortment'].astype('category')
     df['StoreType'] = df['StoreType'].astype('category')
     df['PromoInterval']= df['PromoInterval'].astype('category')
-    
+    df['MonthPhase'] = df['MonthPhase'].astype('category')
     
     df['StateHoliday_cat'] = df['StateHoliday'].cat.codes
     df['Assortment_cat'] = df['Assortment'].cat.codes
     df['StoreType_cat'] = df['StoreType'].cat.codes
     df['PromoInterval_cat'] = df['PromoInterval'].cat.codes
+    df['MonthPhase_cat'] = df['MonthPhase'].cat.codes
     
     df['StateHoliday_cat'] = df['StateHoliday_cat'].astype('float')
     df['Assortment_cat'] = df['Assortment_cat'].astype('float')
     df['StoreType_cat'] = df['StoreType_cat'].astype('float')
     df['PromoInterval_cat'] = df['PromoInterval_cat'].astype('float')
+    df['MonthPhase_cat'] = df['MonthPhase_cat'].astype('float')
     
-    df = pd.get_dummies(df, columns=["Assortment", "StoreType","PromoInterval"], prefix=["is_Assortment", "is_StoreType","is_PromoInteval"])
+    df = pd.get_dummies(df, columns=["Assortment", "StoreType","PromoInterval","MonthPhase"], prefix=["is_Assortment", "is_StoreType","is_PromoInteval","MonthPhase"])
     
-    
-    # Calculate CompetitionOpenSince
-    df['CompetitionOpenSince'] = pd.to_datetime(np.where(
-    (df['CompetitionOpenSinceMonth']==0) & (df['CompetitionOpenSinceYear']==0),
-    df['Date'],  # Set to current date if competition hasn't opened yet
-    df.apply(lambda row: pd.DateOffset(year=row['Year'], month=row['Month']) - timedelta(days=row['CompetitionOpenSinceMonth']), axis=1)
-))
 
-# Calculate CompetitionDaysOpen
-    df['CompetitionDaysOpen'] = (df['Date'] - df['CompetitionOpenSince']).dt.days
-
-# Ensure CompetitionDaysOpen is positive
-    df['CompetitionDaysOpen'] = df['CompetitionDaysOpen'].apply(lambda x: max(x, 0))
-
-
-    del df['CompetitionOpenSinceYear']
-    del df['CompetitionOpenSinceMonth']
     del df['StateHoliday']
+    del df['StateHoliday_cat'] 
+    del df['Assortment_cat']
+    del df['StoreType_cat'] 
+    del df['PromoInterval_cat'] 
+    del df['MonthPhase_cat'] 
+    
 
     logging.info("Feature extraction completed")
     return df
