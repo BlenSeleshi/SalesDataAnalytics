@@ -4,7 +4,7 @@ This section explains the structure and purpose of the notebooks used for prepro
 
 ---
 
-## 1. **Preprocessing Notebook: `preprocessing_notebook.ipynb`**
+## 1. **Preprocessing Notebook: `preprocess.ipynb`**
 
 ### Purpose
 
@@ -46,7 +46,7 @@ train_store.to_csv('train_store.csv', index=False)
 
 ---
 
-## 2. **EDA Notebook: `eda_notebook.ipynb`**
+## 2. **EDA Notebook: `EDA_and_TSA.ipynb`**
 
 ### Purpose
 
@@ -90,7 +90,7 @@ eda.plot_acf_pacf(df, lags=30)
 
 ---
 
-## 3. **Sales Analysis Notebook: `sales_analysis_notebook.ipynb`**
+## 3. **Sales Analysis Notebook: `salesAnalysis.ipynb`**
 
 ### Purpose
 
@@ -152,3 +152,17 @@ sa.seasonal_sales_behavior(train_store)
    Finally, use the sales analysis notebook to gain deeper insights into factors affecting sales, such as promotions, holidays, and competition.
 
 ---
+
+## 4. **Sales Prediction Notebook: `store_sales_prediction.ipynb`**
+
+Data Loading: Load the Rossmann sales dataset and preprocess it using preprocessing.py.
+Model Training: Train the Random Forest and LSTM models by calling the respective scripts (train_random_forest.py and train_lstm.py).
+Model Comparison: Compare the performance of Random Forest and LSTM models using RMSE and visualize the results.
+Post-Prediction Analysis: Use the functions from post_prediction_analysis.py to plot feature importance, estimate confidence intervals, and visualize the predicted vs actual sales.
+How to Use:
+Ensure that all the required Python scripts are located in the scripts/ folder.
+Launch the notebook from the command line:
+bash
+Copy code
+jupyter notebook notebook/rossmann_sales_analysis.ipynb
+Follow the steps in the notebook to run the entire analysis pipeline, from data preprocessing to model evaluation and post-prediction analysis.

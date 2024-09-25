@@ -162,19 +162,63 @@ competitor_distance_sales(train)
 
 ---
 
-## Dependencies
+4. random_forest_model.py
+   This script builds and trains a Random Forest model using Scikit-learn pipelines and hyperparameter tuning with RandomizedSearchCV.
 
-- `pandas`
-- `seaborn`
-- `matplotlib`
-- `statsmodels`
-- `scipy`
-- `logging`
+Key Functions:
+build_random_forest_model(): Sets up and tunes a Random Forest model using a randomized grid search for hyperparameter optimization.
+train_and_evaluate_random_forest(X_train, y_train, X_test, y_test): Trains the model and evaluates it on the test set. 5. lstm_model.py
+This script builds and trains an LSTM model for time-series forecasting using TensorFlow/Keras.
 
-Make sure you have these libraries installed before running the scripts:
+Key Functions:
+create_supervised_data(series, window): Converts the time-series data into supervised data format for LSTM.
+build_lstm_model(input_shape): Defines and compiles the LSTM model with appropriate layers and dropout regularization.
+train_and_evaluate_lstm(X_train, y_train, X_test, y_test): Trains and evaluates the LSTM model.
 
-```bash
-pip install pandas seaborn matplotlib statsmodels scipy
-```
+6. model_serialization.py
+   This script handles model serialization and deserialization, ensuring that trained models can be saved and loaded for later use.
 
----
+Key Functions:
+save_model(model, filepath): Serializes and saves the trained model to disk.
+load_model(filepath): Loads a pre-trained model from disk. 7. post_prediction_analysis.py
+This script contains utility functions for post-prediction analysis, including plotting feature importance for the Random Forest model and visualizing prediction results.
+
+Key Functions:
+plot_feature_importance(model, feature_names): Plots the feature importance of the Random Forest model.
+estimate_confidence_interval(predictions, y_true): Estimates the 95% confidence interval of prediction errors.
+visualize_predictions(predicted_sales, actual_sales): Visualizes predicted vs actual sales.
+Running the Scripts
+Preprocessing: Run preprocessing.py to preprocess the raw dataset.
+
+bash
+Copy code
+python scripts/preprocessor.py
+Random Forest Training: Train the Random Forest model and save the trained model.
+
+bash
+Copy code
+python scripts/random_forest_model.py
+LSTM Training: Train the LSTM model using the preprocessed data.
+
+bash
+Copy code
+python scripts/lstm_model.py
+
+bash
+Copy code
+python scripts/model_serialization.py
+Post-Prediction Analysis: Analyze model predictions and visualize results.
+
+bash
+Copy code
+python scripts/post_prediction_analysis.py
+
+Dependencies
+Python 3.8+
+Libraries:
+pandas
+numpy
+scikit-learn
+tensorflow
+matplotlib
+statsmodels
